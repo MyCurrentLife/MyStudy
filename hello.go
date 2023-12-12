@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import "os"
 
 func main(){
-	fmt.Println("Hello world!")
+	text := "Hello world!"
+	file, err := os.Create("hello.txt")
+
+	if err != nil{
+		os.Exit(1)
+	}
+	file.WriteString(text)
 }
