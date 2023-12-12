@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
-
+import (
+	"fmt"
+	"os"
+)
 func main(){
-	fmt.Println("Hello world!")
+	text := "Hello world!"
+	file, err := os.Create("C:\\GitHub\\MyStudy\\hello.txt")
+	if err != nil{
+		os.Exit(1)
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	file.WriteString(text)
 }
