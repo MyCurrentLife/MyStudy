@@ -6,10 +6,9 @@ import (
 )
 func main(){
 	text := "Hello world!"
-	file, err := os.Create("C:\\GitHub\\MyStudy\\hello.txt")
+	file, err := os.Create("hello.txt")
 	if err != nil{
-		os.Exit(1)
-		fmt.Println(err)
+		fmt.Println("error")
 	}
 	defer file.Close()
 
