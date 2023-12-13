@@ -1,0 +1,1 @@
+{"Product":"Стул","Status":"ok","Id":32}
