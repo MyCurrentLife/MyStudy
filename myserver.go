@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -44,22 +43,8 @@ func GetStatus(w http.ResponseWriter, r http.Request) {
 }
 
 func GetDataBaseOrders(w http.ResponseWriter, r http.Request) {
-	file, err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil {
-		fmt.Fprintf(w, "500")
-	}
+	bytesFile := getBytesFromFile("Orders.txt",w)
 
-	fileinfo, err := file.Stat()
-	if err != nil {
-		fmt.Fprintf(w, "500")
-	}
-	filesize := fileinfo.Size()
-
-	bytesFile := make([]byte, filesize)
-
-	_, err = file.Read(bytesFile)
-
-	defer file.Close()
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytesFile)
 
@@ -67,21 +52,9 @@ func GetDataBaseOrders(w http.ResponseWriter, r http.Request) {
 func AddOrder(w http.ResponseWriter, r http.Request) {
 	product := r.URL.Query().Get("order")
 
-	file, err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil {
-		fmt.Fprintf(w, "500")
-	}
-
-	defer file.Close()
-	fileinfo, err := file.Stat()
-	if err != nil {
-	}
-
-	filesize := fileinfo.Size()
-
-	bytesFile := make([]byte, filesize)
-	_, err = file.Read(bytesFile)
-	err = json.Unmarshal(bytesFile, &OrderDataBase)
+	bytesFile := getBytesFromFile("Orders.txt",w)
+	
+	err := json.Unmarshal(bytesFile, &OrderDataBase)
 
 	if len(OrderDataBase) > 0 {
 		lastID := OrderDataBase[len(OrderDataBase)-1].Id
@@ -98,83 +71,92 @@ func AddOrder(w http.ResponseWriter, r http.Request) {
 		})
 	}
 
-	writeText, err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil {
-		fmt.Fprintf(w, "500")
-	}
-
 	bytesOrder, err := json.Marshal(OrderDataBase)
 	if err != nil {
 		fmt.Fprintf(w, "500")
 	}
 
-	writeText.Write(bytesOrder)
-
-	defer writeText.Close()
+	writeTextInFile("Orders.txt", bytesOrder,w)
 
 	fmt.Fprint(w, "Order added")
 }
 func ConfirmOrder(w http.ResponseWriter, r http.Request) {
 	id := r.URL.Query().Get("id")
+	
 	intId, err := strconv.Atoi(id)
 	if err != nil {
+		fmt.Fprintf(w,"500")
 	}
 
-	file, err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil {
-	}
-	b, err := io.ReadAll(file)
-	if err != nil {
-	}
+	b := getBytesFromFile("Orders.txt",w)
 
 	err = json.Unmarshal(b, &OrderDataBase)
-	OrderDataBase[intId-1].Status = "Confirmed"
-	bytesorder, err := json.Marshal(OrderDataBase)
-	if err != nil {
+	
+	for i := 0; i < len(OrderDataBase); i++{
+		if OrderDataBase[i].Id == intId{
+			OrderDataBase[i].Status = "Confirm"
+			fmt.Fprintf(w, "Order confirmed")
+		}
 	}
 	
-	writetext,err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil{}
+	bytesorder, err := json.Marshal(OrderDataBase)
+	if err != nil {
+		fmt.Fprintf(w,"500")
+	}
 	
-	
-	writetext.Write(bytesorder)
-
-
-	defer file.Close()
-	defer writetext.Close()
-
-
-	fmt.Fprintf(w, "zaebalsa")
+	writeTextInFile("Orders.txt",bytesorder,w)
 }
 func CancelOrder(w http.ResponseWriter, r http.Request) {
 	id := r.URL.Query().Get("id")
+	
 	intId, err := strconv.Atoi(id)
 	if err != nil {
+		fmt.Fprintf(w,"500")
 	}
 
-	file, err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil {
-	}
-	b, err := io.ReadAll(file)
-	if err != nil {
-	}
+	b := getBytesFromFile("Orders.txt", w)
 
 	err = json.Unmarshal(b, &OrderDataBase)
-	OrderDataBase[intId-1].Status = "Canceled"
-	bytesorder, err := json.Marshal(OrderDataBase)
-	if err != nil {
+	
+	for i := 0; i < len(OrderDataBase)-1; i++{
+		if OrderDataBase[i].Id == intId{
+			OrderDataBase[i].Status = "Cancel"
+			fmt.Fprintf(w, "Order canceled")
+		}
 	}
 	
-	writetext,err := os.OpenFile("Orders.txt", os.O_RDWR, 0644)
-	if err != nil{}
+	bytesorder, err := json.Marshal(OrderDataBase)
+	if err != nil {
+		fmt.Fprintf(w,"500")
+	}
 	
-	
-	writetext.Write(bytesorder)
+	writeTextInFile("Orders.txt", bytesorder,w)
+}
+func getBytesFromFile(name string, w http.ResponseWriter)[]byte{
+	file, err := os.OpenFile(name, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Fprintf(w,"500")
+	}
+
+	defer file.Close()
+	fileinfo, err := file.Stat()
+	if err != nil {
+		fmt.Fprintf(w,"500")
+	}
+
+	filesize := fileinfo.Size()
+
+	bytesFile := make([]byte, filesize)
+	_, err = file.Read(bytesFile)
+	return bytesFile
+}
+func writeTextInFile(name string, b []byte,w http.ResponseWriter){
+	file,err := os.OpenFile(name, os.O_RDWR, 0644)
+	if err != nil{
+		fmt.Fprintf(w,"500")
+	}
 
 
 	defer file.Close()
-	defer writetext.Close()
-
-
-	fmt.Fprintf(w, "zaebalsa")
+	file.Write(b)
 }
