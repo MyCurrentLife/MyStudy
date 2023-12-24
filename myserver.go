@@ -15,47 +15,50 @@ type Order struct {
 	Status  string
 }
 
-var OrderDataBase []Order
+const fileName string = "Orders.txt"
+const statusOk int = 200
+const statusServerError int = 500
+const statusClientError int = 400
 
 func main() {
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		GetStatus(w, *r)
-	})
-	http.HandleFunc("/listOrder", func(w http.ResponseWriter, r *http.Request) {
-		GetDataBaseOrders(w, *r)
-	})
-	http.HandleFunc("/addOrder", func(w http.ResponseWriter, r *http.Request) {
-		AddOrder(w, *r)
-	})
-	http.HandleFunc("/confirmOrder", func(w http.ResponseWriter, r *http.Request) {
-		ConfirmOrder(w, *r)
-	})
-	http.HandleFunc("/cancelOrder", func(w http.ResponseWriter, r *http.Request) {
-		CancelOrder(w, *r)
-	})
+	http.HandleFunc("/health", GetStatus)
+	http.HandleFunc("/listOrder", GetDataBaseOrders)
+	http.HandleFunc("/addOrder", AddOrder)
+	http.HandleFunc("/confirmOrder", ConfirmOrder)
+	http.HandleFunc("/cancelOrder", CancelOrder)
 
-	port := ":5000"
-	log.Fatal(http.ListenAndServe(port, nil))
+	hostName := ":5000"
+	log.Fatal(http.ListenAndServe(hostName, nil))
 }
 
-func GetStatus(w http.ResponseWriter, r http.Request) {
+func GetStatus(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ok")
 }
 
-func GetDataBaseOrders(w http.ResponseWriter, r http.Request) {
-	bytesFile := getBytesFromFile("Orders.txt",w)
-
+func GetDataBaseOrders(w http.ResponseWriter, r *http.Request) {
+	bytesFile, err := getBytesFromFile(fileName)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bytesFile)
 
 }
-func AddOrder(w http.ResponseWriter, r http.Request) {
+func AddOrder(w http.ResponseWriter, r *http.Request) {
+	//первая часть - распаковка данных
+	var OrderDataBase []Order
 	product := r.URL.Query().Get("order")
 
-	bytesFile := getBytesFromFile("Orders.txt",w)
-	
-	err := json.Unmarshal(bytesFile, &OrderDataBase)
+	bytesFile, err := getBytesFromFile(fileName)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 
+	err = json.Unmarshal(bytesFile, &OrderDataBase)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
+	//вторая часть - работа с данными
 	if len(OrderDataBase) > 0 {
 		lastID := OrderDataBase[len(OrderDataBase)-1].Id
 		OrderDataBase = append(OrderDataBase, Order{
@@ -70,93 +73,140 @@ func AddOrder(w http.ResponseWriter, r http.Request) {
 			Product: product,
 		})
 	}
-
+	//третья часть - обратная запись данных в базу
 	bytesOrder, err := json.Marshal(OrderDataBase)
 	if err != nil {
-		fmt.Fprintf(w, "500")
+		w.WriteHeader(statusServerError)
 	}
 
-	writeTextInFile("Orders.txt", bytesOrder,w)
+	err = writeTextInFile(fileName, bytesOrder)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 
 	fmt.Fprint(w, "Order added")
 }
-func ConfirmOrder(w http.ResponseWriter, r http.Request) {
+func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
+	//первая часть - распаковка данных
+	var OrderDataBase []Order
 	id := r.URL.Query().Get("id")
-	
+
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		w.WriteHeader(statusServerError)
 	}
 
-	b := getBytesFromFile("Orders.txt",w)
+	b, err := getBytesFromFile(fileName)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 
 	err = json.Unmarshal(b, &OrderDataBase)
-	
-	for i := 0; i < len(OrderDataBase); i++{
-		if OrderDataBase[i].Id == intId{
-			OrderDataBase[i].Status = "Confirm"
-			fmt.Fprintf(w, "Order confirmed")
-		}
+	//вторая часть - работа с данными
+	status := findIdAndConfirmed(OrderDataBase, intId)
+	if status == 200 {
+		fmt.Fprintf(w, "order confirmed")
+	} else if status == 400 {
+		w.WriteHeader(statusClientError)
 	}
-	
+
+	//третья часть - обратная запись данных в базу
 	bytesorder, err := json.Marshal(OrderDataBase)
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		w.WriteHeader(statusServerError)
 	}
-	
-	writeTextInFile("Orders.txt",bytesorder,w)
+
+	err = writeTextInFile(fileName, bytesorder)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 }
-func CancelOrder(w http.ResponseWriter, r http.Request) {
+
+func CancelOrder(w http.ResponseWriter, r *http.Request) {
+	//первая часть - распаковка данных
+	var OrderDataBase []Order
 	id := r.URL.Query().Get("id")
-	
+
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		w.WriteHeader(statusServerError)
 	}
 
-	b := getBytesFromFile("Orders.txt", w)
+	b, err := getBytesFromFile(fileName)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 
 	err = json.Unmarshal(b, &OrderDataBase)
-	
-	for i := 0; i < len(OrderDataBase)-1; i++{
-		if OrderDataBase[i].Id == intId{
-			OrderDataBase[i].Status = "Cancel"
-			fmt.Fprintf(w, "Order canceled")
-		}
+	//вторая часть - работа с данными
+	status := findIdAndCanceled(OrderDataBase, intId)
+	if status == 200 {
+		fmt.Fprintf(w, "order canceled")
+	} else if status == 400 {
+		w.WriteHeader(statusClientError)
 	}
-	
+	//третья часть - обратная запись данных в базу
 	bytesorder, err := json.Marshal(OrderDataBase)
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		w.WriteHeader(statusServerError)
 	}
-	
-	writeTextInFile("Orders.txt", bytesorder,w)
+
+	err = writeTextInFile(fileName, bytesorder)
+	if err != nil {
+		w.WriteHeader(statusServerError)
+	}
 }
-func getBytesFromFile(name string, w http.ResponseWriter)[]byte{
+func getBytesFromFile(name string) ([]byte, error) {
+	b := make([]byte, 0, 0)
 	file, err := os.OpenFile(name, os.O_RDWR, 0644)
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		return b, err
 	}
 
 	defer file.Close()
 	fileinfo, err := file.Stat()
 	if err != nil {
-		fmt.Fprintf(w,"500")
+		return b, err
 	}
 
 	filesize := fileinfo.Size()
 
 	bytesFile := make([]byte, filesize)
 	_, err = file.Read(bytesFile)
-	return bytesFile
+	return bytesFile, nil
 }
-func writeTextInFile(name string, b []byte,w http.ResponseWriter){
-	file,err := os.OpenFile(name, os.O_RDWR, 0644)
-	if err != nil{
-		fmt.Fprintf(w,"500")
+func writeTextInFile(name string, b []byte) error {
+	file, err := os.OpenFile(name, os.O_RDWR, 0644)
+	if err != nil {
+		return err
 	}
-
-
 	defer file.Close()
 	file.Write(b)
+	return nil
+}
+func findIdAndConfirmed(OrderDataBase []Order, intId int) int {
+	var status int
+
+	for i := 0; i < len(OrderDataBase); i++ {
+		if OrderDataBase[i].Id == intId {
+			OrderDataBase[i].Status = "Confirm"
+			status = 200
+			return status
+		}
+	}
+	status = 400
+	return status
+}
+func findIdAndCanceled(OrderDataBase []Order, intId int) int {
+	var status int
+
+	for i := 0; i < len(OrderDataBase)-1; i++ {
+		if OrderDataBase[i].Id == intId {
+			OrderDataBase[i].Status = "Cancel"
+			status = 200
+			return status
+		}
+	}
+	status = 400
+	return status
 }
