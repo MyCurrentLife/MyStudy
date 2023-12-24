@@ -187,7 +187,7 @@ func writeTextInFile(name string, b []byte) error {
 func findIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) int {
 	var status int
 
-	for i := 0; i < len(OrderDataBase)-1; i++ {
+	for i := 0; i < len(OrderDataBase); i++ {
 		if OrderDataBase[i].Id == intId {
 			OrderDataBase[i].Status = statusOrder
 			status = 200
