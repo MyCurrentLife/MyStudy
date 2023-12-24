@@ -103,7 +103,7 @@ func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &OrderDataBase)
 	//вторая часть - работа с данными
-	status := findIdAndConfirmed(OrderDataBase, intId)
+	status := findIdAndEditStatus(OrderDataBase, intId, "Confirm")
 	if status == 200 {
 		fmt.Fprintf(w, "order confirmed")
 	} else if status == 400 {
@@ -139,7 +139,7 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &OrderDataBase)
 	//вторая часть - работа с данными
-	status := findIdAndCanceled(OrderDataBase, intId)
+	status := findIdAndEditStatus(OrderDataBase, intId, "Cancel")
 	if status == 200 {
 		fmt.Fprintf(w, "order canceled")
 	} else if status == 400 {
@@ -184,25 +184,12 @@ func writeTextInFile(name string, b []byte) error {
 	file.Write(b)
 	return nil
 }
-func findIdAndConfirmed(OrderDataBase []Order, intId int) int {
-	var status int
-
-	for i := 0; i < len(OrderDataBase); i++ {
-		if OrderDataBase[i].Id == intId {
-			OrderDataBase[i].Status = "Confirm"
-			status = 200
-			return status
-		}
-	}
-	status = 400
-	return status
-}
-func findIdAndCanceled(OrderDataBase []Order, intId int) int {
+func findIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) int {
 	var status int
 
 	for i := 0; i < len(OrderDataBase)-1; i++ {
 		if OrderDataBase[i].Id == intId {
-			OrderDataBase[i].Status = "Cancel"
+			OrderDataBase[i].Status = statusOrder
 			status = 200
 			return status
 		}
