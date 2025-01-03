@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func FindIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) error {
+func (db InMemoryDataBase) FindIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) error {
 
 	for i := 0; i < len(OrderDataBase); i++ {
 		if OrderDataBase[i].Id == intId {
