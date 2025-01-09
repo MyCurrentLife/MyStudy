@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
+func (db *InMemoryDataBase) ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 	//первая часть - распаковка данных
 	id := r.URL.Query().Get("id")
 
@@ -26,7 +26,7 @@ func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusServerError)
 	}
 	//вторая часть - работа с данными
-	err = FindIdAndEditStatus(OrderDataBase, intId, "Confirm")
+	err = db.FindIdAndEditStatus(db.data, intId, "Confirm")
 	if err.Error() == "Всё плохо!" {
 		fmt.Fprintf(w, "id is missing")
 	} else {
@@ -34,7 +34,7 @@ func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//третья часть - обратная запись данных в базу
-	bytesorder, err := json.Marshal(OrderDataBase)
+	bytesorder, err := json.Marshal(db.data)
 	if err != nil {
 		w.WriteHeader(statusServerError)
 	}

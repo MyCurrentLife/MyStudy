@@ -7,12 +7,12 @@ import (
 
 type testCase struct {
 	name        string
-	dataBase    []Order
+	dataBase    *InMemoryDataBase
 	inputId     int
 	inputStatus string
 	outputError bool
 	errMsg      string
-	outputValue []Order
+	outputValue *InMemoryDataBase
 }
 
 func TestFindIdAndEditStatus(t *testing.T) {
@@ -21,27 +21,27 @@ func TestFindIdAndEditStatus(t *testing.T) {
 	testCases := []testCase{
 		{
 			name:        "success",
-			dataBase:    []Order{{Product: "banana", Id: 1, Status: "ok"}},
+			dataBase:    NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
 			inputId:     1,
 			inputStatus: "changed",
 			outputError: false,
 			errMsg:      "",
-			outputValue: []Order{{Product: "banana", Id: 1, Status: "changed"}},
+			outputValue: NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
 		},
 		{
 			name:        "failure",
-			dataBase:    []Order{{Product: "banana", Id: 1, Status: "ok"}},
+			dataBase:    NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
 			inputId:     2,
 			inputStatus: "changed",
 			outputError: true,
 			errMsg:      "всё плохо",
-			outputValue: []Order{{Product: "banana", Id: 1, Status: "changed"}},
+			outputValue: NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
 		},
 	}
 
 	//тест функции
 	for _, d := range testCases {
-		err := FindIdAndEditStatus(d.dataBase, d.inputId, d.inputStatus)
+		err := d.dataBase.FindIdAndEditStatus(d.dataBase.data, d.inputId, d.inputStatus)
 
 		//проверка на ошибку
 
@@ -50,7 +50,7 @@ func TestFindIdAndEditStatus(t *testing.T) {
 		}
 		//проверка результатов
 
-		if reflect.DeepEqual(d.dataBase, d.outputValue) == d.outputError {
+		if reflect.DeepEqual(d.dataBase.data, d.outputValue.data) == d.outputError {
 			t.Errorf("%v case is not equal", d.name)
 		}
 	}
