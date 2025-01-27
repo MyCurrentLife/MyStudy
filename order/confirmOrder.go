@@ -2,45 +2,43 @@ package order
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
+	"errors"
 	"strconv"
 )
 
-func (db *InMemoryDataBase) ConfirmOrder(w http.ResponseWriter, r *http.Request) {
+func (db *InMemoryDataBase) ConfirmOrder(id string) error {
 	//первая часть - распаковка данных
-	id := r.URL.Query().Get("id")
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		return err
 	}
 
 	b, err := getBytesFromFile(fileName)
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		return err
 	}
 
 	err = json.Unmarshal(b, &OrderDataBase)
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		return err
 	}
 	//вторая часть - работа с данными
 	err = db.FindIdAndEditStatus(db.data, intId, "Confirm")
 	if err.Error() == "Всё плохо!" {
-		fmt.Fprintf(w, "id is missing")
-	} else {
-		fmt.Fprintf(w, "Product confirmed")
+		err = errors.New("id is missing")
+		return err
 	}
 
 	//третья часть - обратная запись данных в базу
 	bytesorder, err := json.Marshal(db.data)
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		return err
 	}
 
 	err = writeTextInFile(fileName, bytesorder)
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		return err
 	}
+	return nil
 }
