@@ -2,6 +2,7 @@ package order
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 const fileName string = "Orders.txt"
@@ -13,12 +14,12 @@ func (db *InMemoryDataBase) AddOrder(product string) error {
 
 	bytesFile, err := getBytesFromFile(fileName)
 	if err != nil {
-		return err
+		return errors.New("serverError")
 	}
 
 	err = json.Unmarshal(bytesFile, &db.data)
 	if err != nil {
-		return err
+		return errors.New("serverError")
 	}
 	//вторая часть - работа с данными
 	if len(db.data) > 0 {
@@ -38,12 +39,12 @@ func (db *InMemoryDataBase) AddOrder(product string) error {
 	//третья часть - обратная запись данных в базу
 	bytesOrder, err := json.Marshal(db.data)
 	if err != nil {
-		return err
+		return errors.New("serverError")
 	}
 
 	err = writeTextInFile(fileName, bytesOrder)
 	if err != nil {
-		return err
+		return errors.New("serverError")
 	}
-	return nil
+	return errors.New("order added")
 }

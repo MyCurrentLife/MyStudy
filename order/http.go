@@ -41,9 +41,7 @@ func AddOrder(w http.ResponseWriter, r *http.Request) {
 
 	err := OrderDataBase.AddOrder(product)
 	if err != nil {
-		w.WriteHeader(statusServerError)
-	} else {
-		fmt.Fprint(w, "Order added")
+		fmt.Fprint(w, err.Error())
 	}
 }
 
