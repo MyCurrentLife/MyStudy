@@ -52,13 +52,10 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 	err := OrderDataBase.CancelOrder(id)
 
-	if err != nil && err.Error() != "id is missing" {
-		w.WriteHeader(statusServerError)
+	if err == nil {
+		fmt.Fprint(w, "Error Empty")
 	}
-	if err.Error() == "id is missing" {
-		fmt.Fprint(w, err.Error())
-	}
-	if err.Error() == "Product canceled" {
+	if err != nil {
 		fmt.Fprint(w, err.Error())
 	}
 
@@ -66,17 +63,16 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	err := OrderDataBase.ConfirmOrder(id)
-	if err != nil && err.Error() != "id is missing" {
-		w.WriteHeader(statusServerError)
-	}
-	if err.Error() == "id is missing" {
-		fmt.Fprint(w, err.Error())
-	}
-	if err.Error() == "Product confirmed" {
-		fmt.Fprint(w, err.Error())
-	}
 
+	err := OrderDataBase.ConfirmOrder(id)
+
+	if err == nil {
+		fmt.Fprint(w, "Error Empty")
+	}
+	if err != nil {
+		fmt.Fprint(w, err.Error())
+
+	}
 }
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {

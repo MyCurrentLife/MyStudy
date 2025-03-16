@@ -19,10 +19,14 @@ func (db *InMemoryDataBase) CancelOrder(id string) error {
 		return err
 	}
 
-	_ = json.Unmarshal(b, &OrderDataBase)
+	if len(b) == 2 {
+		return errors.New("dataBase is empty")
+	}
+
+	_ = json.Unmarshal(b, &db.data)
 	//вторая часть - работа с данными
 	err = db.FindIdAndEditStatus(db.data, intId, "Cancel")
-	if err.Error() == "Всё плохо!" {
+	if err.Error() == "всё плохо" {
 		return errors.New("id is missing")
 	}
 	//третья часть - обратная запись данных в базу
@@ -34,5 +38,5 @@ func (db *InMemoryDataBase) CancelOrder(id string) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return errors.New("product Canceled")
 }

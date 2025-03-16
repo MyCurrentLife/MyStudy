@@ -19,13 +19,17 @@ func (db *InMemoryDataBase) ConfirmOrder(id string) error {
 		return err
 	}
 
-	err = json.Unmarshal(b, &OrderDataBase)
+	if len(b) == 2 {
+		return errors.New("dataBase is empty")
+	}
+
+	err = json.Unmarshal(b, &db.data)
 	if err != nil {
 		return err
 	}
 	//вторая часть - работа с данными
 	err = db.FindIdAndEditStatus(db.data, intId, "Confirm")
-	if err.Error() == "Всё плохо!" {
+	if err.Error() == "всё плохо" {
 		err = errors.New("id is missing")
 		return err
 	}
@@ -40,5 +44,5 @@ func (db *InMemoryDataBase) ConfirmOrder(id string) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return errors.New("product confirmed")
 }
