@@ -1,6 +1,6 @@
 package order
 
-func (db *InMemoryDataBase) GetStatus() (string, error) {
+func (db *FileDataBase) GetStatus() (string, error) {
 	status := "ok"
 	return status, nil
 }

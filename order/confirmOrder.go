@@ -1,12 +1,11 @@
 package order
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 )
 
-func (db *InMemoryDataBase) ConfirmOrder(id string) error {
+func (db *FileDataBase) ConfirmOrder(id string) error {
 	//первая часть - распаковка данных
 
 	intId, err := strconv.Atoi(id)
@@ -14,19 +13,11 @@ func (db *InMemoryDataBase) ConfirmOrder(id string) error {
 		return err
 	}
 
-	b, err := getBytesFromFile(fileName)
+	db.data, err = db.GetJSONFromFile()
 	if err != nil {
-		return err
+		return errors.New(statusServerError)
 	}
 
-	if len(b) == 2 {
-		return errors.New("dataBase is empty")
-	}
-
-	err = json.Unmarshal(b, &db.data)
-	if err != nil {
-		return err
-	}
 	//вторая часть - работа с данными
 	err = db.FindIdAndEditStatus(db.data, intId, "Confirm")
 	if err.Error() == "всё плохо" {
@@ -35,14 +26,9 @@ func (db *InMemoryDataBase) ConfirmOrder(id string) error {
 	}
 
 	//третья часть - обратная запись данных в базу
-	bytesorder, err := json.Marshal(db.data)
+	err = db.writeDataBaseInFile()
 	if err != nil {
-		return err
-	}
-
-	err = writeTextInFile(fileName, bytesorder)
-	if err != nil {
-		return err
+		return errors.New(statusServerError)
 	}
 	return errors.New("product confirmed")
 }

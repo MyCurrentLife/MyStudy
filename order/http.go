@@ -21,28 +21,32 @@ type Order struct {
 }
 
 // реализация интерфейса базы данных
-type InMemoryDataBase struct {
+type FileDataBase struct {
 	data []Order
 }
 
 // конструктор базы данных
-func NewInMemoryDataBase(Ord []Order) *InMemoryDataBase {
-	return &InMemoryDataBase{
+func NewFileDataBase(Ord []Order) *FileDataBase {
+	return &FileDataBase{
 		data: Ord,
 	}
 }
 
 // синглтон(надо как-то избегать)
-var OrderDataBase DataBase = NewInMemoryDataBase([]Order{})
+var OrderDataBase DataBase = NewFileDataBase([]Order{})
 
 // главные интерфейсные функции, которые скрывают реализацию, но запускают процесс
 func AddOrder(w http.ResponseWriter, r *http.Request) {
 	product := r.URL.Query().Get("order")
 
 	err := OrderDataBase.AddOrder(product)
-	if err != nil {
+
+	if err.Error() == "order added" {
 		fmt.Fprint(w, err.Error())
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 }
 
 func CancelOrder(w http.ResponseWriter, r *http.Request) {
@@ -50,13 +54,11 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 	err := OrderDataBase.CancelOrder(id)
 
-	if err == nil {
-		fmt.Fprint(w, "Error Empty")
-	}
-	if err != nil {
+	if err.Error() == "order Canceled" {
 		fmt.Fprint(w, err.Error())
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
 }
 
 func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
@@ -64,19 +66,17 @@ func ConfirmOrder(w http.ResponseWriter, r *http.Request) {
 
 	err := OrderDataBase.ConfirmOrder(id)
 
-	if err == nil {
-		fmt.Fprint(w, "Error Empty")
-	}
-	if err != nil {
+	if err.Error() == "product confirmed" {
 		fmt.Fprint(w, err.Error())
-
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
 	status, err := OrderDataBase.GetStatus()
 	if err != nil {
-		w.WriteHeader(statusServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	fmt.Fprint(w, status)
 }

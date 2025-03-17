@@ -7,12 +7,12 @@ import (
 
 type testCase struct {
 	name        string
-	dataBase    *InMemoryDataBase
+	dataBase    *FileDataBase
 	inputId     int
 	inputStatus string
 	outputError bool
 	errMsg      string
-	outputValue *InMemoryDataBase
+	outputValue *FileDataBase
 }
 
 func TestFindIdAndEditStatus(t *testing.T) {
@@ -21,21 +21,21 @@ func TestFindIdAndEditStatus(t *testing.T) {
 	testCases := []testCase{
 		{
 			name:        "success",
-			dataBase:    NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
+			dataBase:    NewFileDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
 			inputId:     1,
 			inputStatus: "changed",
 			outputError: false,
 			errMsg:      "",
-			outputValue: NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
+			outputValue: NewFileDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
 		},
 		{
 			name:        "failure",
-			dataBase:    NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
+			dataBase:    NewFileDataBase([]Order{{Product: "banana", Id: 1, Status: "ok"}}),
 			inputId:     2,
 			inputStatus: "changed",
 			outputError: true,
 			errMsg:      "всё плохо",
-			outputValue: NewInMemoryDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
+			outputValue: NewFileDataBase([]Order{{Product: "banana", Id: 1, Status: "changed"}}),
 		},
 	}
 

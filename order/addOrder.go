@@ -1,26 +1,22 @@
 package order
 
 import (
-	"encoding/json"
 	"errors"
 )
 
 const fileName string = "Orders.txt"
 
-var statusServerError = 500
+var statusServerError = "500"
 
-func (db *InMemoryDataBase) AddOrder(product string) error {
+func (db *FileDataBase) AddOrder(product string) error {
 	//первая часть - распаковка данных
+	var err error
 
-	bytesFile, err := getBytesFromFile(fileName)
+	db.data, err = db.GetJSONFromFile()
 	if err != nil {
-		return errors.New("serverError")
+		return errors.New(statusServerError)
 	}
 
-	err = json.Unmarshal(bytesFile, &db.data)
-	if err != nil {
-		return errors.New("serverError")
-	}
 	//вторая часть - работа с данными
 	if len(db.data) > 0 {
 		lastID := db.data[len(db.data)-1].Id
@@ -37,14 +33,10 @@ func (db *InMemoryDataBase) AddOrder(product string) error {
 		})
 	}
 	//третья часть - обратная запись данных в базу
-	bytesOrder, err := json.Marshal(db.data)
+	err = db.writeDataBaseInFile()
 	if err != nil {
-		return errors.New("serverError")
+		return errors.New(statusServerError)
 	}
 
-	err = writeTextInFile(fileName, bytesOrder)
-	if err != nil {
-		return errors.New("serverError")
-	}
 	return errors.New("order added")
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-func (db *InMemoryDataBase) FindIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) error {
+func (db *FileDataBase) FindIdAndEditStatus(OrderDataBase []Order, intId int, statusOrder string) error {
 
 	if intId > len(OrderDataBase) {
 		return errors.New("всё плохо")
